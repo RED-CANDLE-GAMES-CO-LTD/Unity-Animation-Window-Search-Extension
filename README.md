@@ -1,4 +1,4 @@
-# Unity Animation Window Search Plugin
+# Unity Animation Window Search Extension
 
 A Unity Editor extension that adds search functionality to Unity's Animation Window, making it easier to find and switch between animation clips.
 
@@ -18,7 +18,7 @@ A Unity Editor extension that adds search functionality to Unity's Animation Win
 3. Select "Add package from git URL..."
 4. Enter the following URL:
    ```
-   https://github.com/RED-CANDLE-GAMES-CO-LTD/UnityAnimationWindowSearchPlugin.git?path=Packages/com.redcandlegames.animation-clip-search
+   https://github.com/RED-CANDLE-GAMES-CO-LTD/Unity-Animation-Window-Search-Extension.git?path=Packages/com.redcandlegames.animation-clip-search
    ```
 5. Click "Add" and wait for the package to install
 
@@ -69,7 +69,7 @@ Contributions are welcome! Please feel free to submit a Pull Request.
 
 ## Support
 
-If you encounter any issues or have suggestions, please file an issue on the [GitHub repository](https://github.com/RED-CANDLE-GAMES-CO-LTD/UnityAnimationWindowSearchPlugin/issues).
+If you encounter any issues or have suggestions, please file an issue on the [GitHub repository](https://github.com/RED-CANDLE-GAMES-CO-LTD/Unity-Animation-Window-Search-Extension/issues).
 
 ## Authors
 
