@@ -1,0 +1,22 @@
+{
+  "name": "com.redcandlegames.animation-clip-search",
+  "version": "1.0.0",
+  "displayName": "Animation Clip Search Tool",
+  "description": "Adds search functionality to Unity's Animation Window, allowing quick access to animation clips through a searchable interface.",
+  "unity": "2019.4",
+  "unityRelease": "0f1",
+  "keywords": [
+    "animation",
+    "search",
+    "editor",
+    "workflow",
+    "productivity"
+  ],
+  "author": {
+    "name": "huw12313212,henrywang",
+    "email": "huw12313212@gmail.com",
+    "url": ""
+  },
+  "type": "tool",
+  "hideInEditor": false
+}

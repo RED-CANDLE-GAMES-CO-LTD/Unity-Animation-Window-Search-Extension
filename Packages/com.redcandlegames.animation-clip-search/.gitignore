@@ -1,0 +1,26 @@
+# macOS
+.DS_Store
+.AppleDouble
+.LSOverride
+._*
+
+# Unity meta files should be included for packages
+# *.meta
+
+# Temporary files
+*.tmp
+*.temp
+
+# IDE
+.idea/
+.vscode/
+*.user
+*.userprefs
+
+# Build results
+[Bb]uild/
+[Bb]uilds/
+
+# OS generated
+Thumbs.db
+Desktop.ini
