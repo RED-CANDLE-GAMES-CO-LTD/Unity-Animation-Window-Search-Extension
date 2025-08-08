@@ -137,14 +137,58 @@ namespace RedCandleGames.Editor
                 clearButton.style.display = DisplayStyle.None;
                 injectedSearchContainer.Add(clearButton);
                 
-                // Insert at the top of the window
-                rootVisualElement.Insert(0, injectedSearchContainer);
+                // Find the best place to insert our search UI
+                // Look for the toolbar or first child element
+                VisualElement insertTarget = null;
+                VisualElement insertAfter = null;
+                
+                // Try to find the toolbar
+                var toolbar = rootVisualElement.Q("AnimationWindowToolbar") ?? 
+                             rootVisualElement.Q("Toolbar") ??
+                             rootVisualElement.Q(className: "unity-toolbar");
+                
+                if (toolbar != null)
+                {
+                    // Insert after toolbar
+                    insertTarget = toolbar.parent;
+                    insertAfter = toolbar;
+                }
+                else
+                {
+                    // Insert at the top
+                    insertTarget = rootVisualElement;
+                }
+                
+                if (insertTarget != null)
+                {
+                    if (insertAfter != null)
+                    {
+                        var index = insertTarget.IndexOf(insertAfter);
+                        if (index >= 0)
+                        {
+                            insertTarget.Insert(index + 1, injectedSearchContainer);
+                        }
+                        else
+                        {
+                            insertTarget.Insert(0, injectedSearchContainer);
+                        }
+                    }
+                    else
+                    {
+                        insertTarget.Insert(0, injectedSearchContainer);
+                    }
+                }
+                else
+                {
+                    // Fallback
+                    rootVisualElement.Insert(0, injectedSearchContainer);
+                }
                 
                 // Create dropdown container (initially hidden)
                 searchDropdown = new VisualElement();
                 searchDropdown.name = "AnimationClipSearchDropdown";
                 searchDropdown.style.position = Position.Absolute;
-                searchDropdown.style.top = 25;
+                searchDropdown.style.top = 27;  // Fixed position below search container
                 searchDropdown.style.left = 5;
                 searchDropdown.style.right = 5;
                 searchDropdown.style.maxHeight = 200;
@@ -158,6 +202,7 @@ namespace RedCandleGames.Editor
                 searchDropdown.style.borderRightColor = new Color(0.1f, 0.1f, 0.1f, 1f);
                 searchDropdown.style.borderBottomColor = new Color(0.1f, 0.1f, 0.1f, 1f);
                 searchDropdown.style.display = DisplayStyle.None;
+                searchDropdown.style.zIndex = 1000;  // Ensure dropdown appears above other content
                 
                 // Create scroll view for dropdown
                 var scrollView = new ScrollView();
