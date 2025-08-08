@@ -19,6 +19,9 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ### Fixed
 - Override Controller now correctly shows all available clips (base + overrides)
 - Base animations without overrides are no longer incorrectly hidden
+- Fixed duplicate clips appearing in search results
+- Fixed "Hide Overridden Clips" checkbox not properly filtering clips
+- Improved UI spacing to prevent elements from overlapping
 
 ## [1.0.2] - 2025-08-08
 

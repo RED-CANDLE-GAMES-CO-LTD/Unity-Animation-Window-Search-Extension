@@ -20,8 +20,9 @@ namespace RedCandleGames.Editor
         private const float WINDOW_WIDTH = 300f;
         private const float WINDOW_HEIGHT = 400f;
         
-        // Track overridden clips
-        private HashSet<AnimationClip> overriddenClips = new HashSet<AnimationClip>();
+        // Track overridden clips and their relationships
+        private HashSet<AnimationClip> overriddenBaseClips = new HashSet<AnimationClip>();
+        private Dictionary<AnimationClip, AnimationClip> baseToOverrideMap = new Dictionary<AnimationClip, AnimationClip>();
         private bool hideOverriddenClips = true;
         private const string HIDE_OVERRIDDEN_PREF_KEY = "AnimationClipSearch_HideOverridden";
         
@@ -93,7 +94,8 @@ namespace RedCandleGames.Editor
         private void RefreshClipList()
         {
             allClips.Clear();
-            overriddenClips.Clear();
+            overriddenBaseClips.Clear();
+            baseToOverrideMap.Clear();
             
             // First try to get clips from current Animator Controller
             GameObject selectedGO = Selection.activeGameObject;
@@ -123,38 +125,39 @@ namespace RedCandleGames.Editor
                             var overrides = new List<KeyValuePair<AnimationClip, AnimationClip>>(overrideController.overridesCount);
                             overrideController.GetOverrides(overrides);
                             
-                            // Create a mapping of original clips to their overrides
-                            var overrideMap = new Dictionary<AnimationClip, AnimationClip>();
+                            // Create mappings for overrides
                             foreach (var kvp in overrides)
                             {
                                 if (kvp.Key != null && kvp.Value != null)
                                 {
-                                    overrideMap[kvp.Key] = kvp.Value;
-                                    // Track which base clips are overridden
+                                    baseToOverrideMap[kvp.Key] = kvp.Value;
                                     if (!kvp.Key.name.StartsWith("__preview__"))
                                     {
-                                        overriddenClips.Add(kvp.Key);
+                                        overriddenBaseClips.Add(kvp.Key);
                                     }
                                 }
                             }
                             
-                            // Add clips: use override if available, otherwise use base clip
+                            // When "Hide Overridden Clips" is checked, only show the effective clips
+                            // When unchecked, show both base and override clips
                             foreach (var baseClip in baseClips)
                             {
-                                if (overrideMap.ContainsKey(baseClip))
+                                if (!baseClip.name.StartsWith("__preview__"))
                                 {
-                                    // Add the override clip instead of the base clip
-                                    var overrideClip = overrideMap[baseClip];
-                                    if (!overrideClip.name.StartsWith("__preview__"))
+                                    if (baseToOverrideMap.ContainsKey(baseClip))
                                     {
-                                        allClips.Add(overrideClip);
+                                        // This base clip has an override
+                                        var overrideClip = baseToOverrideMap[baseClip];
+                                        if (!overrideClip.name.StartsWith("__preview__"))
+                                        {
+                                            allClips.Add(overrideClip);
+                                        }
+                                        // Add the base clip too (will be filtered later if needed)
+                                        allClips.Add(baseClip);
                                     }
-                                }
-                                else
-                                {
-                                    // No override for this clip, add the base clip
-                                    if (!baseClip.name.StartsWith("__preview__"))
+                                    else
                                     {
+                                        // No override for this clip, just add the base clip
                                         allClips.Add(baseClip);
                                     }
                                 }
@@ -196,7 +199,9 @@ namespace RedCandleGames.Editor
                 }
             }
             
-            // Sort by name
+            // Remove duplicates and sort by name
+            var uniqueClips = new HashSet<AnimationClip>(allClips);
+            allClips = new List<AnimationClip>(uniqueClips);
             allClips.Sort((a, b) => string.Compare(a.name, b.name, System.StringComparison.OrdinalIgnoreCase));
             
             UpdateFilteredList();
@@ -283,9 +288,9 @@ namespace RedCandleGames.Editor
             IEnumerable<AnimationClip> clipsToFilter = allClips;
             
             // Apply overridden filter if enabled
-            if (hideOverriddenClips && overriddenClips.Count > 0)
+            if (hideOverriddenClips && overriddenBaseClips.Count > 0)
             {
-                clipsToFilter = allClips.Where(clip => !overriddenClips.Contains(clip));
+                clipsToFilter = allClips.Where(clip => !overriddenBaseClips.Contains(clip));
             }
             
             if (string.IsNullOrEmpty(searchQuery))
@@ -358,6 +363,7 @@ namespace RedCandleGames.Editor
             // Show hide overridden clips checkbox if using override controller
             if (hasOverrideController)
             {
+                EditorGUILayout.Space(5);
                 EditorGUI.BeginChangeCheck();
                 hideOverriddenClips = EditorGUILayout.Toggle("Hide Overridden Clips", hideOverriddenClips);
                 if (EditorGUI.EndChangeCheck())
@@ -366,6 +372,7 @@ namespace RedCandleGames.Editor
                     EditorPrefs.SetBool(HIDE_OVERRIDDEN_PREF_KEY, hideOverriddenClips);
                     UpdateFilteredList();
                 }
+                EditorGUILayout.Space(2);
             }
             
             // Results info
@@ -384,7 +391,9 @@ namespace RedCandleGames.Editor
                 }
             }
             
+            EditorGUILayout.Space(3);
             GUILayout.Label($"{filteredClips.Count} clips{(string.IsNullOrEmpty(searchScope) ? "" : " in " + searchScope)}", EditorStyles.miniLabel);
+            EditorGUILayout.Space(3);
             
             // Clip list
             scrollPosition = EditorGUILayout.BeginScrollView(scrollPosition);
