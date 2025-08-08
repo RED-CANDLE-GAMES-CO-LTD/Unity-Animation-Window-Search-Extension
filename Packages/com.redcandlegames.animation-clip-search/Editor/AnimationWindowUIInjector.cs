@@ -114,12 +114,11 @@ namespace RedCandleGames.Editor
                 // Create search field
                 searchField = new TextField();
                 searchField.name = "AnimationClipSearchField";
-                // Note: placeholder property might not exist in older Unity versions
-                #if UNITY_2021_2_OR_NEWER
-                searchField.placeholder = "Search animation clips (Alt+S)";
-                #endif
                 searchField.style.flexGrow = 1;
                 searchField.style.height = 20;
+                
+                // Try to set placeholder using reflection (safer for different Unity versions)
+                TrySetPlaceholder(searchField, "Search animation clips (Alt+S)");
                 
                 // Register value changed callback
                 searchField.RegisterValueChangedCallback(OnSearchValueChanged);
@@ -485,6 +484,45 @@ namespace RedCandleGames.Editor
                 {
                     GetClipsFromBlendTree(childBlendTree, clips);
                 }
+            }
+        }
+        
+        private static void TrySetPlaceholder(TextField textField, string placeholderText)
+        {
+            try
+            {
+                // Use reflection to check if placeholder property exists
+                var placeholderProperty = typeof(TextField).GetProperty("placeholder");
+                if (placeholderProperty != null && placeholderProperty.CanWrite)
+                {
+                    placeholderProperty.SetValue(textField, placeholderText);
+                }
+                else
+                {
+                    // Fallback: add a label hint that shows when field is empty
+                    var placeholderLabel = new Label(placeholderText);
+                    placeholderLabel.style.position = Position.Absolute;
+                    placeholderLabel.style.left = 5;
+                    placeholderLabel.style.top = 0;
+                    placeholderLabel.style.color = new Color(0.5f, 0.5f, 0.5f, 0.7f);
+                    placeholderLabel.style.fontSize = 11;
+                    placeholderLabel.pickingMode = PickingMode.Ignore;
+                    
+                    textField.Add(placeholderLabel);
+                    
+                    // Hide/show based on text content
+                    textField.RegisterValueChangedCallback(evt => 
+                    {
+                        placeholderLabel.style.display = string.IsNullOrEmpty(evt.newValue) 
+                            ? DisplayStyle.Flex 
+                            : DisplayStyle.None;
+                    });
+                }
+            }
+            catch (Exception e)
+            {
+                // Silently fail - placeholder is not critical
+                Debug.LogWarning($"Could not set placeholder text: {e.Message}");
             }
         }
         
