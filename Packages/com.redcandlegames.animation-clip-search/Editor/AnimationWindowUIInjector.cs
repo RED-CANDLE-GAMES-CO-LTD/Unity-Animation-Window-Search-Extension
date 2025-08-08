@@ -114,7 +114,10 @@ namespace RedCandleGames.Editor
                 // Create search field
                 searchField = new TextField();
                 searchField.name = "AnimationClipSearchField";
+                // Note: placeholder property might not exist in older Unity versions
+                #if UNITY_2021_2_OR_NEWER
                 searchField.placeholder = "Search animation clips (Alt+S)";
+                #endif
                 searchField.style.flexGrow = 1;
                 searchField.style.height = 20;
                 
