@@ -348,20 +348,8 @@ namespace RedCandleGames.Editor
                 EditorGUI.FocusTextInControl("SearchField");
             }
             
-            // Check if we have an override controller to show the checkbox
-            GameObject selectedGO = Selection.activeGameObject;
-            bool hasOverrideController = false;
-            if (selectedGO != null)
-            {
-                Animator animator = FindAnimatorInHierarchy(selectedGO);
-                if (animator != null && animator.runtimeAnimatorController is AnimatorOverrideController)
-                {
-                    hasOverrideController = true;
-                }
-            }
-            
-            // Show hide overridden clips checkbox if using override controller
-            if (hasOverrideController)
+            // Show hide overridden clips checkbox only if there are actually overridden clips
+            if (overriddenBaseClips.Count > 0)
             {
                 EditorGUILayout.Space(5);
                 EditorGUI.BeginChangeCheck();

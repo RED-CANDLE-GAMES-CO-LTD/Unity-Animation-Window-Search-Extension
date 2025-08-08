@@ -23,6 +23,10 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - Fixed "Hide Overridden Clips" checkbox not properly filtering clips
 - Improved UI spacing to prevent elements from overlapping
 
+### Improved
+- "Hide Overridden Clips" checkbox now only appears when there are actually overridden clips
+- Cleaner UI when using Override Controllers without any actual overrides
+
 ## [1.0.2] - 2025-08-08
 
 ### Added
