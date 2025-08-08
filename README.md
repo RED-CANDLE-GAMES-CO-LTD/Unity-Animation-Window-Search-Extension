@@ -9,6 +9,8 @@ A Unity Editor extension that adds search functionality to Unity's Animation Win
 - **Quick Search** - Search through all animation clips in your project or current Animator Controller
 - **Keyboard Shortcuts** - Use Alt+S (Option+S on Mac) to open search while in Animation Window
 - **Smart Filtering** - Automatically shows clips from the current Animator Controller when available
+- **Multi-Layer Support** - Searches through all layers in complex Animator Controllers
+- **Override Controller Support** - Properly handles AnimatorOverrideController, showing both base and overridden clips
 - **Fast Navigation** - Press Enter to apply the first search result
 
 ## Installation

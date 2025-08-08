@@ -4,6 +4,8 @@
 
 The Animation Clip Search Tool is a Unity Editor extension that adds powerful search functionality to Unity's Animation Window. It allows developers to quickly search and switch between animation clips using a keyboard shortcut, significantly improving workflow efficiency when working with animations.
 
+![Animation Clip Search Demo](../../../Documentation/demo.gif)
+
 ## Features
 
 - **Quick Access**: Press `Alt+S` (Windows/Linux) or `Option+S` (Mac) to open the search window
