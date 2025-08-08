@@ -1,5 +1,14 @@
 # Animation Window UI Injection Testing Guide
 
+## 重要說明
+
+UI 注入功能是實驗性的，可能在某些 Unity 版本中無法正常工作。這是因為：
+1. Unity 的 Animation Window 內部結構可能因版本而異
+2. 某些版本可能只使用 IMGUI 而沒有 UI Toolkit 支援
+3. rootVisualElement 可能在視窗生命週期的較晚階段才初始化
+
+如果 UI 注入失敗，系統會自動降級到彈出式搜尋視窗。
+
 ## 新功能概述
 
 我們已經實作了將搜尋功能直接整合到 Unity Animation Window 的實驗性功能。這個功能會在 Animation Window 頂部注入一個搜尋框，讓你可以直接在視窗內搜尋和切換動畫片段。
@@ -46,10 +55,16 @@
 2. **降級測試**
    - 如果 UI 注入失敗，按 `Alt+S` 應該開啟原本的彈出式搜尋視窗
 
-### 4. 手動測試命令
+### 4. 診斷和手動測試命令
 
-如果自動注入沒有生效，可以使用選單命令手動測試：
-- `Window > Animation > Test UI Injection`
+如果自動注入沒有生效，可以使用以下選單命令：
+
+1. **診斷工具**：
+   - `Window > Animation > Debug UI Injection` - 顯示詳細的診斷資訊，幫助了解注入失敗的原因
+
+2. **手動測試**：
+   - `Window > Animation > Test UI Injection` - 手動觸發注入
+   - `Window > Animation > Force UI Injection Retry` - 強制重試注入
 
 ## 已知限制
 

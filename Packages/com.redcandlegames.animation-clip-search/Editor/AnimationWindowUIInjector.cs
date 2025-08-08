@@ -33,8 +33,15 @@ namespace RedCandleGames.Editor
             {
                 if (animationWindow != lastAnimationWindow || !isInjected)
                 {
-                    InjectSearchUI(animationWindow);
-                    lastAnimationWindow = animationWindow;
+                    // Delay injection to ensure window is fully initialized
+                    EditorApplication.delayCall += () =>
+                    {
+                        if (animationWindow != null)
+                        {
+                            InjectSearchUI(animationWindow);
+                            lastAnimationWindow = animationWindow;
+                        }
+                    };
                 }
             }
             else
@@ -71,7 +78,7 @@ namespace RedCandleGames.Editor
                 
                 if (rootVisualElement == null)
                 {
-                    Debug.LogWarning("AnimationWindow rootVisualElement is null");
+                    Debug.LogWarning("AnimationWindow rootVisualElement is null. This might happen in older Unity versions or when the window is not fully initialized.");
                     return;
                 }
                 
@@ -80,6 +87,9 @@ namespace RedCandleGames.Editor
                 {
                     return;
                 }
+                
+                // Log Unity version for debugging
+                Debug.Log($"Attempting to inject search UI into Animation Window (Unity {Application.unityVersion})");
                 
                 // Create search container
                 injectedSearchContainer = new VisualElement();
@@ -158,12 +168,21 @@ namespace RedCandleGames.Editor
                 RefreshClipList();
                 
                 isInjected = true;
-                Debug.Log("Successfully injected search UI into Animation Window");
+                Debug.Log($"Successfully injected search UI into Animation Window (Unity {Application.unityVersion})");
             }
             catch (Exception e)
             {
-                Debug.LogError($"Failed to inject search UI: {e.Message}");
-                Debug.LogError(e.StackTrace);
+                Debug.LogError($"Failed to inject search UI into Animation Window: {e.Message}");
+                Debug.LogError($"Unity Version: {Application.unityVersion}");
+                Debug.LogError($"Stack Trace: {e.StackTrace}");
+                
+                // Log additional diagnostic info
+                if (animWindow != null)
+                {
+                    Debug.LogError($"Window Type: {animWindow.GetType().FullName}");
+                    Debug.LogError($"Has rootVisualElement: {animWindow.rootVisualElement != null}");
+                }
+                
                 isInjected = false;
             }
         }
