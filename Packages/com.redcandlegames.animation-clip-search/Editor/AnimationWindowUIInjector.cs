@@ -17,16 +17,32 @@ namespace RedCandleGames.Editor
         private static VisualElement searchDropdown;
         private static TextField searchField;
         private static bool isInjected = false;
+        private static bool isEnabled = false; // Disabled by default due to compatibility issues
         private static List<AnimationClip> allClips = new List<AnimationClip>();
         private static List<AnimationClip> filteredClips = new List<AnimationClip>();
         
         static AnimationWindowUIInjector()
         {
-            EditorApplication.update += OnEditorUpdate;
+            // Check if injection is enabled
+            isEnabled = EditorPrefs.GetBool("AnimationClipSearch_FullInjection", false);
+            
+            if (isEnabled)
+            {
+                EditorApplication.update += OnEditorUpdate;
+            }
+        }
+        
+        public static void DisableInjection()
+        {
+            isEnabled = false;
+            EditorApplication.update -= OnEditorUpdate;
+            CleanupInjection();
         }
         
         private static void OnEditorUpdate()
         {
+            if (!isEnabled) return;
+            
             var animationWindow = GetAnimationWindow();
             
             if (animationWindow != null)
@@ -91,21 +107,23 @@ namespace RedCandleGames.Editor
                 // Log Unity version for debugging
                 Debug.Log($"Attempting to inject search UI into Animation Window (Unity {Application.unityVersion})");
                 
-                // Create search container
+                // Create search container with absolute positioning to avoid layout issues
                 injectedSearchContainer = new VisualElement();
                 injectedSearchContainer.name = "AnimationClipSearchContainer";
+                injectedSearchContainer.style.position = Position.Absolute;
+                injectedSearchContainer.style.top = 0;
+                injectedSearchContainer.style.left = 0;
+                injectedSearchContainer.style.right = 0;
                 injectedSearchContainer.style.flexDirection = FlexDirection.Row;
                 injectedSearchContainer.style.alignItems = Align.Center;
                 injectedSearchContainer.style.height = 25;
-                injectedSearchContainer.style.minHeight = 25;
                 injectedSearchContainer.style.paddingLeft = 5;
                 injectedSearchContainer.style.paddingRight = 5;
                 injectedSearchContainer.style.paddingTop = 2;
                 injectedSearchContainer.style.paddingBottom = 2;
-                injectedSearchContainer.style.backgroundColor = new Color(0.2f, 0.2f, 0.2f, 0.3f);
+                injectedSearchContainer.style.backgroundColor = new Color(0.2f, 0.2f, 0.2f, 0.9f);
                 injectedSearchContainer.style.borderBottomWidth = 1;
                 injectedSearchContainer.style.borderBottomColor = new Color(0.1f, 0.1f, 0.1f, 1f);
-                injectedSearchContainer.style.flexShrink = 0;  // Prevent container from shrinking
                 
                 // Create search icon/label
                 var searchLabel = new Label("🔍");
@@ -139,62 +157,17 @@ namespace RedCandleGames.Editor
                 clearButton.style.display = DisplayStyle.None;
                 injectedSearchContainer.Add(clearButton);
                 
-                // Instead of restructuring, try to find the main content area
-                // Animation Window might have a specific structure we need to respect
-                
-                // Look for the main content container
-                var mainContent = rootVisualElement.Q("AnimationWindowContent") ??
-                                 rootVisualElement.Q("content") ??
-                                 rootVisualElement.Q(className: "unity-imgui-container");
-                
-                if (mainContent != null && mainContent.parent != null)
-                {
-                    // Insert search container before the main content
-                    var parent = mainContent.parent;
-                    var index = parent.IndexOf(mainContent);
-                    if (index >= 0)
-                    {
-                        parent.Insert(index, injectedSearchContainer);
-                    }
-                    else
-                    {
-                        rootVisualElement.Insert(0, injectedSearchContainer);
-                    }
-                }
-                else
-                {
-                    // Fallback: Look for any child that seems to be the main area
-                    VisualElement targetChild = null;
-                    foreach (var child in rootVisualElement.Children())
-                    {
-                        // Skip toolbar-like elements
-                        if (child.name != null && (child.name.Contains("toolbar") || child.name.Contains("Toolbar")))
-                            continue;
-                            
-                        // This might be the main content area
-                        targetChild = child;
-                        break;
-                    }
-                    
-                    if (targetChild != null)
-                    {
-                        var index = rootVisualElement.IndexOf(targetChild);
-                        rootVisualElement.Insert(index, injectedSearchContainer);
-                    }
-                    else
-                    {
-                        // Last resort: just add at the top
-                        rootVisualElement.Insert(0, injectedSearchContainer);
-                    }
-                }
+                // Simply add the search container to the root
+                // Using absolute positioning to avoid disrupting the layout
+                rootVisualElement.Add(injectedSearchContainer);
                 
                 // Create dropdown container (initially hidden)
                 searchDropdown = new VisualElement();
                 searchDropdown.name = "AnimationClipSearchDropdown";
                 searchDropdown.style.position = Position.Absolute;
-                searchDropdown.style.top = 27;  // Fixed position below search container
-                searchDropdown.style.left = 5;
-                searchDropdown.style.right = 5;
+                searchDropdown.style.top = 25;  // Position right below search container
+                searchDropdown.style.left = 0;
+                searchDropdown.style.right = 0;
                 searchDropdown.style.maxHeight = 200;
                 searchDropdown.style.backgroundColor = new Color(0.25f, 0.25f, 0.25f, 0.95f);
                 searchDropdown.style.borderBottomLeftRadius = 3;
