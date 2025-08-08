@@ -44,7 +44,7 @@ namespace RedCandleGames.Editor
         
         private static Rect GetOptimalWindowPosition()
         {
-            // Try to position the window near the Animation Window
+            // Try to position the window overlapping the center of Animation Window
             System.Type animationWindowType = System.Type.GetType("UnityEditor.AnimationWindow, UnityEditor");
             if (animationWindowType != null)
             {
@@ -56,23 +56,19 @@ namespace RedCandleGames.Editor
                     {
                         Rect animWindowPos = animWindow.position;
                         
-                        // Position the search window to the right of Animation Window if there's space
-                        float newX = animWindowPos.x + animWindowPos.width + 10;
+                        // Position the search window centered horizontally on the Animation Window
+                        float newX = animWindowPos.x + (animWindowPos.width - WINDOW_WIDTH) / 2;
+                        // Align Y position with Animation Window
                         float newY = animWindowPos.y;
                         
-                        // Check if it would go off screen
+                        // Ensure the window is within screen bounds
+                        if (newX < 0) newX = 0;
                         if (newX + WINDOW_WIDTH > Screen.currentResolution.width)
                         {
-                            // Try positioning to the left
-                            newX = animWindowPos.x - WINDOW_WIDTH - 10;
-                            if (newX < 0)
-                            {
-                                // If no space on either side, overlap slightly on the right
-                                newX = animWindowPos.x + animWindowPos.width - WINDOW_WIDTH;
-                            }
+                            newX = Screen.currentResolution.width - WINDOW_WIDTH;
                         }
                         
-                        // Ensure Y position is within screen bounds
+                        if (newY < 0) newY = 0;
                         if (newY + WINDOW_HEIGHT > Screen.currentResolution.height)
                         {
                             newY = Screen.currentResolution.height - WINDOW_HEIGHT - 50; // Leave some margin
@@ -118,40 +114,67 @@ namespace RedCandleGames.Editor
                         // For override controllers, we need to get clips from both the base controller and overrides
                         controller = overrideController.runtimeAnimatorController as AnimatorController;
                         
-                        // Get override clips
-                        var overrides = new List<KeyValuePair<AnimationClip, AnimationClip>>(overrideController.overridesCount);
-                        overrideController.GetOverrides(overrides);
-                        
-                        // Track which clips are overridden (the "key" is the original clip)
-                        foreach (var kvp in overrides)
+                        if (controller != null)
                         {
-                            if (kvp.Key != null && !kvp.Key.name.StartsWith("__preview__"))
+                            // First, get all clips from the base controller
+                            var baseClips = GetAllClipsFromController(controller);
+                            
+                            // Get override mappings
+                            var overrides = new List<KeyValuePair<AnimationClip, AnimationClip>>(overrideController.overridesCount);
+                            overrideController.GetOverrides(overrides);
+                            
+                            // Create a mapping of original clips to their overrides
+                            var overrideMap = new Dictionary<AnimationClip, AnimationClip>();
+                            foreach (var kvp in overrides)
                             {
-                                overriddenClips.Add(kvp.Key);
+                                if (kvp.Key != null && kvp.Value != null)
+                                {
+                                    overrideMap[kvp.Key] = kvp.Value;
+                                    // Track which base clips are overridden
+                                    if (!kvp.Key.name.StartsWith("__preview__"))
+                                    {
+                                        overriddenClips.Add(kvp.Key);
+                                    }
+                                }
                             }
-                        }
-                        
-                        // Add the override clips (the "value" is the new clip)
-                        foreach (var kvp in overrides)
-                        {
-                            if (kvp.Value != null && !kvp.Value.name.StartsWith("__preview__"))
+                            
+                            // Add clips: use override if available, otherwise use base clip
+                            foreach (var baseClip in baseClips)
                             {
-                                allClips.Add(kvp.Value);
+                                if (overrideMap.ContainsKey(baseClip))
+                                {
+                                    // Add the override clip instead of the base clip
+                                    var overrideClip = overrideMap[baseClip];
+                                    if (!overrideClip.name.StartsWith("__preview__"))
+                                    {
+                                        allClips.Add(overrideClip);
+                                    }
+                                }
+                                else
+                                {
+                                    // No override for this clip, add the base clip
+                                    if (!baseClip.name.StartsWith("__preview__"))
+                                    {
+                                        allClips.Add(baseClip);
+                                    }
+                                }
                             }
+                            
+                            foundControllerClips = true;
                         }
                     }
                     else
                     {
                         // Regular AnimatorController
                         controller = animator.runtimeAnimatorController as AnimatorController;
-                    }
-                    
-                    if (controller != null)
-                    {
-                        // Get all clips from the base animator controller
-                        var clips = GetAllClipsFromController(controller);
-                        allClips.AddRange(clips);
-                        foundControllerClips = true;
+                        
+                        if (controller != null)
+                        {
+                            // Get all clips from the animator controller
+                            var clips = GetAllClipsFromController(controller);
+                            allClips.AddRange(clips);
+                            foundControllerClips = true;
+                        }
                     }
                 }
             }
