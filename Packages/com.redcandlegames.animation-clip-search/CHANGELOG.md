@@ -5,6 +5,24 @@ All notable changes to this package will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [1.0.2] - 2025-08-08
+
+### Added
+- "Hide Overridden Clips" checkbox when using AnimatorOverrideController
+  - By default, hides clips that have been overridden from the base controller
+  - Can be unchecked to show all clips including the overridden ones
+  - User preference is saved and persisted across sessions
+
+### Changed
+- Search window now tracks which clips are overridden when using Override Controllers
+- Filter logic updated to respect the hide overridden clips preference
+
+### Improved
+- Clip Search window now opens aligned with the Animation Window
+  - Attempts to position to the right of Animation Window if space permits
+  - Falls back to left side or overlapping if screen space is limited
+  - Centers on screen if Animation Window is not found
+
 ## [1.0.1] - 2025-08-08
 
 ### Added

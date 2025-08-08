@@ -20,11 +20,16 @@ namespace RedCandleGames.Editor
         private const float WINDOW_WIDTH = 300f;
         private const float WINDOW_HEIGHT = 400f;
         
+        // Track overridden clips
+        private HashSet<AnimationClip> overriddenClips = new HashSet<AnimationClip>();
+        private bool hideOverriddenClips = true;
+        private const string HIDE_OVERRIDDEN_PREF_KEY = "AnimationClipSearch_HideOverridden";
+        
         public static void ShowWindow()
         {
             var window = GetWindow<AnimationClipSearchTool>("Clip Search");
             window.minSize = new Vector2(WINDOW_WIDTH, WINDOW_HEIGHT);
-            window.position = new Rect(Screen.width / 2, Screen.height / 2, WINDOW_WIDTH, WINDOW_HEIGHT);
+            window.position = GetOptimalWindowPosition();
             window.RefreshClipList();
         }
         
@@ -32,19 +37,67 @@ namespace RedCandleGames.Editor
         {
             var window = GetWindow<AnimationClipSearchTool>("Clip Search");
             window.minSize = new Vector2(WINDOW_WIDTH, WINDOW_HEIGHT);
-            window.position = new Rect(Screen.width / 2, Screen.height / 2, WINDOW_WIDTH, WINDOW_HEIGHT);
+            window.position = GetOptimalWindowPosition();
             window.onClipSelected = callback;
             window.RefreshClipList();
         }
         
+        private static Rect GetOptimalWindowPosition()
+        {
+            // Try to position the window near the Animation Window
+            System.Type animationWindowType = System.Type.GetType("UnityEditor.AnimationWindow, UnityEditor");
+            if (animationWindowType != null)
+            {
+                EditorWindow[] animWindows = Resources.FindObjectsOfTypeAll(animationWindowType) as EditorWindow[];
+                if (animWindows != null && animWindows.Length > 0)
+                {
+                    EditorWindow animWindow = animWindows[0];
+                    if (animWindow != null)
+                    {
+                        Rect animWindowPos = animWindow.position;
+                        
+                        // Position the search window to the right of Animation Window if there's space
+                        float newX = animWindowPos.x + animWindowPos.width + 10;
+                        float newY = animWindowPos.y;
+                        
+                        // Check if it would go off screen
+                        if (newX + WINDOW_WIDTH > Screen.currentResolution.width)
+                        {
+                            // Try positioning to the left
+                            newX = animWindowPos.x - WINDOW_WIDTH - 10;
+                            if (newX < 0)
+                            {
+                                // If no space on either side, overlap slightly on the right
+                                newX = animWindowPos.x + animWindowPos.width - WINDOW_WIDTH;
+                            }
+                        }
+                        
+                        // Ensure Y position is within screen bounds
+                        if (newY + WINDOW_HEIGHT > Screen.currentResolution.height)
+                        {
+                            newY = Screen.currentResolution.height - WINDOW_HEIGHT - 50; // Leave some margin
+                        }
+                        
+                        return new Rect(newX, newY, WINDOW_WIDTH, WINDOW_HEIGHT);
+                    }
+                }
+            }
+            
+            // Fallback to center of screen if Animation Window not found
+            return new Rect(Screen.width / 2 - WINDOW_WIDTH / 2, Screen.height / 2 - WINDOW_HEIGHT / 2, WINDOW_WIDTH, WINDOW_HEIGHT);
+        }
+        
         private void OnEnable()
         {
+            // Load preference
+            hideOverriddenClips = EditorPrefs.GetBool(HIDE_OVERRIDDEN_PREF_KEY, true);
             RefreshClipList();
         }
         
         private void RefreshClipList()
         {
             allClips.Clear();
+            overriddenClips.Clear();
             
             // First try to get clips from current Animator Controller
             GameObject selectedGO = Selection.activeGameObject;
@@ -68,6 +121,15 @@ namespace RedCandleGames.Editor
                         // Get override clips
                         var overrides = new List<KeyValuePair<AnimationClip, AnimationClip>>(overrideController.overridesCount);
                         overrideController.GetOverrides(overrides);
+                        
+                        // Track which clips are overridden (the "key" is the original clip)
+                        foreach (var kvp in overrides)
+                        {
+                            if (kvp.Key != null && !kvp.Key.name.StartsWith("__preview__"))
+                            {
+                                overriddenClips.Add(kvp.Key);
+                            }
+                        }
                         
                         // Add the override clips (the "value" is the new clip)
                         foreach (var kvp in overrides)
@@ -195,14 +257,22 @@ namespace RedCandleGames.Editor
         
         private void UpdateFilteredList()
         {
+            IEnumerable<AnimationClip> clipsToFilter = allClips;
+            
+            // Apply overridden filter if enabled
+            if (hideOverriddenClips && overriddenClips.Count > 0)
+            {
+                clipsToFilter = allClips.Where(clip => !overriddenClips.Contains(clip));
+            }
+            
             if (string.IsNullOrEmpty(searchQuery))
             {
-                filteredClips = new List<AnimationClip>(allClips);
+                filteredClips = new List<AnimationClip>(clipsToFilter);
             }
             else
             {
                 string lowerQuery = searchQuery.ToLower();
-                filteredClips = allClips.Where(clip => 
+                filteredClips = clipsToFilter.Where(clip => 
                     clip.name.ToLower().Contains(lowerQuery) ||
                     AssetDatabase.GetAssetPath(clip).ToLower().Contains(lowerQuery)
                 ).ToList();
@@ -250,8 +320,32 @@ namespace RedCandleGames.Editor
                 EditorGUI.FocusTextInControl("SearchField");
             }
             
-            // Results info
+            // Check if we have an override controller to show the checkbox
             GameObject selectedGO = Selection.activeGameObject;
+            bool hasOverrideController = false;
+            if (selectedGO != null)
+            {
+                Animator animator = FindAnimatorInHierarchy(selectedGO);
+                if (animator != null && animator.runtimeAnimatorController is AnimatorOverrideController)
+                {
+                    hasOverrideController = true;
+                }
+            }
+            
+            // Show hide overridden clips checkbox if using override controller
+            if (hasOverrideController)
+            {
+                EditorGUI.BeginChangeCheck();
+                hideOverriddenClips = EditorGUILayout.Toggle("Hide Overridden Clips", hideOverriddenClips);
+                if (EditorGUI.EndChangeCheck())
+                {
+                    // Save preference
+                    EditorPrefs.SetBool(HIDE_OVERRIDDEN_PREF_KEY, hideOverriddenClips);
+                    UpdateFilteredList();
+                }
+            }
+            
+            // Results info
             string searchScope = "";
             if (selectedGO != null)
             {
