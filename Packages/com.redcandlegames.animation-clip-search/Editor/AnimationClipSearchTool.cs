@@ -56,10 +56,37 @@ namespace RedCandleGames.Editor
                 Animator animator = FindAnimatorInHierarchy(selectedGO);
                 if (animator != null && animator.runtimeAnimatorController != null)
                 {
-                    AnimatorController controller = animator.runtimeAnimatorController as AnimatorController;
+                    // Handle both regular AnimatorController and AnimatorOverrideController
+                    AnimatorController controller = null;
+                    AnimatorOverrideController overrideController = animator.runtimeAnimatorController as AnimatorOverrideController;
+                    
+                    if (overrideController != null)
+                    {
+                        // For override controllers, we need to get clips from both the base controller and overrides
+                        controller = overrideController.runtimeAnimatorController as AnimatorController;
+                        
+                        // Get override clips
+                        var overrides = new List<KeyValuePair<AnimationClip, AnimationClip>>(overrideController.overridesCount);
+                        overrideController.GetOverrides(overrides);
+                        
+                        // Add the override clips (the "value" is the new clip)
+                        foreach (var kvp in overrides)
+                        {
+                            if (kvp.Value != null && !kvp.Value.name.StartsWith("__preview__"))
+                            {
+                                allClips.Add(kvp.Value);
+                            }
+                        }
+                    }
+                    else
+                    {
+                        // Regular AnimatorController
+                        controller = animator.runtimeAnimatorController as AnimatorController;
+                    }
+                    
                     if (controller != null)
                     {
-                        // Get all clips from the animator controller
+                        // Get all clips from the base animator controller
                         var clips = GetAllClipsFromController(controller);
                         allClips.AddRange(clips);
                         foundControllerClips = true;
@@ -232,6 +259,11 @@ namespace RedCandleGames.Editor
                 if (animator != null && animator.runtimeAnimatorController != null)
                 {
                     searchScope = animator.runtimeAnimatorController.name;
+                    // Add (Override) suffix if it's an override controller
+                    if (animator.runtimeAnimatorController is AnimatorOverrideController)
+                    {
+                        searchScope += " (Override)";
+                    }
                 }
             }
             
