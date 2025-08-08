@@ -11,6 +11,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - Added error handling for window creation to prevent ScriptableObject errors
 - More graceful error messages when window creation fails
 - Suggests remediation steps (reimport package or restart Unity)
+- Fixed compilation error: missing selectedGO variable declaration in OnGUI
 
 ## [1.0.3] - 2025-08-08
 

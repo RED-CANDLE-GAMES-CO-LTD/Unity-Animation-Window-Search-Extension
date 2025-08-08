@@ -386,6 +386,7 @@ namespace RedCandleGames.Editor
             }
             
             // Results info
+            GameObject selectedGO = Selection.activeGameObject;
             string searchScope = "";
             if (selectedGO != null)
             {
