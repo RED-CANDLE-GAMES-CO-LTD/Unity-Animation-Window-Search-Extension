@@ -4,7 +4,17 @@
     <option name="autoReloadType" value="SELECTIVE" />
   </component>
   <component name="ChangeListManager">
-    <list default="true" id="69f9ab75-4677-4249-b4dc-8862eab50543" name="Changes" comment="" />
+    <list default="true" id="69f9ab75-4677-4249-b4dc-8862eab50543" name="Changes" comment="">
+      <change beforePath="$PROJECT_DIR$/Packages/com.redcandlegames.animation-clip-search/Editor/AnimationWindowExtensions.cs" beforeDir="false" afterPath="$PROJECT_DIR$/Packages/com.redcandlegames.animation-clip-search/Editor/AnimationWindowExtensions.cs" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/Packages/com.redcandlegames.animation-clip-search/Editor/AnimationWindowMinimalMode.cs" beforeDir="false" afterPath="$PROJECT_DIR$/Packages/com.redcandlegames.animation-clip-search/Editor/AnimationWindowMinimalMode.cs" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/Packages/com.redcandlegames.animation-clip-search/Editor/AnimationWindowUIInjector.cs" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/Packages/com.redcandlegames.animation-clip-search/Editor/AnimationWindowUIInjector.cs.meta" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/Packages/com.redcandlegames.animation-clip-search/Editor/AnimationWindowUIInjectorDebug.cs" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/Packages/com.redcandlegames.animation-clip-search/Editor/AnimationWindowUIInjectorDebug.cs.meta" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/Packages/com.redcandlegames.animation-clip-search/TestingGuide.md" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/Packages/com.redcandlegames.animation-clip-search/TestingGuide.md.meta" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/Packages/com.redcandlegames.animation-clip-search/package.json" beforeDir="false" afterPath="$PROJECT_DIR$/Packages/com.redcandlegames.animation-clip-search/package.json" afterDir="false" />
+    </list>
     <option name="SHOW_DIALOG" value="false" />
     <option name="HIGHLIGHT_CONFLICTS" value="true" />
     <option name="HIGHLIGHT_NON_ACTIVE_CHANGELIST" value="false" />
@@ -48,7 +58,7 @@
       <updated>1754456975493</updated>
       <workItem from="1754456977209" duration="1047000" />
       <workItem from="1754665664852" duration="3841000" />
-      <workItem from="1754671195105" duration="4370000" />
+      <workItem from="1754671195105" duration="4705000" />
     </task>
     <servers />
   </component>

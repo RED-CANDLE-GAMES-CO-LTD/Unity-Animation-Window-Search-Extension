@@ -78,24 +78,28 @@ namespace RedCandleGames.Editor
                 searchButton.text = "🔍";
                 searchButton.tooltip = "Search Animation Clips (Alt+S)";
                 
-                // Position in bottom-left corner
+                // Position in bottom-left corner, smaller and more aligned
                 searchButton.style.position = Position.Absolute;
-                searchButton.style.bottom = 5;
-                searchButton.style.left = 5;
-                searchButton.style.width = 30;
-                searchButton.style.height = 22;
-                searchButton.style.fontSize = 14;
-                searchButton.style.backgroundColor = new Color(0.2f, 0.2f, 0.2f, 0.7f);
-                searchButton.style.borderTopLeftRadius = 3;
-                searchButton.style.borderTopRightRadius = 3;
-                searchButton.style.borderBottomLeftRadius = 3;
-                searchButton.style.borderBottomRightRadius = 3;
+                searchButton.style.bottom = 2;
+                searchButton.style.left = 2;
+                searchButton.style.width = 20;
+                searchButton.style.height = 18;
+                searchButton.style.fontSize = 12;
+                searchButton.style.paddingLeft = 0;
+                searchButton.style.paddingRight = 0;
+                searchButton.style.paddingTop = 0;
+                searchButton.style.paddingBottom = 0;
+                searchButton.style.backgroundColor = new Color(0.2f, 0.2f, 0.2f, 0.6f);
+                searchButton.style.borderTopLeftRadius = 2;
+                searchButton.style.borderTopRightRadius = 2;
+                searchButton.style.borderBottomLeftRadius = 2;
+                searchButton.style.borderBottomRightRadius = 2;
                 
-                // Hover effect
+                // Hover effect - more subtle for smaller button
                 searchButton.RegisterCallback<MouseEnterEvent>(e => 
-                    searchButton.style.backgroundColor = new Color(0.3f, 0.3f, 0.3f, 0.9f));
+                    searchButton.style.backgroundColor = new Color(0.3f, 0.3f, 0.3f, 0.8f));
                 searchButton.RegisterCallback<MouseLeaveEvent>(e => 
-                    searchButton.style.backgroundColor = new Color(0.2f, 0.2f, 0.2f, 0.7f));
+                    searchButton.style.backgroundColor = new Color(0.2f, 0.2f, 0.2f, 0.6f));
                 
                 rootVisualElement.Add(searchButton);
                 
