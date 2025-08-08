@@ -97,6 +97,7 @@ namespace RedCandleGames.Editor
                 injectedSearchContainer.style.flexDirection = FlexDirection.Row;
                 injectedSearchContainer.style.alignItems = Align.Center;
                 injectedSearchContainer.style.height = 25;
+                injectedSearchContainer.style.minHeight = 25;
                 injectedSearchContainer.style.paddingLeft = 5;
                 injectedSearchContainer.style.paddingRight = 5;
                 injectedSearchContainer.style.paddingTop = 2;
@@ -104,6 +105,7 @@ namespace RedCandleGames.Editor
                 injectedSearchContainer.style.backgroundColor = new Color(0.2f, 0.2f, 0.2f, 0.3f);
                 injectedSearchContainer.style.borderBottomWidth = 1;
                 injectedSearchContainer.style.borderBottomColor = new Color(0.1f, 0.1f, 0.1f, 1f);
+                injectedSearchContainer.style.flexShrink = 0;  // Prevent container from shrinking
                 
                 // Create search icon/label
                 var searchLabel = new Label("🔍");
@@ -137,51 +139,32 @@ namespace RedCandleGames.Editor
                 clearButton.style.display = DisplayStyle.None;
                 injectedSearchContainer.Add(clearButton);
                 
-                // Find the best place to insert our search UI
-                // Look for the toolbar or first child element
-                VisualElement insertTarget = null;
-                VisualElement insertAfter = null;
+                // Create a wrapper container to properly push down content
+                var wrapperContainer = new VisualElement();
+                wrapperContainer.name = "AnimationClipSearchWrapper";
+                wrapperContainer.style.flexDirection = FlexDirection.Column;
+                wrapperContainer.style.flexGrow = 1;
                 
-                // Try to find the toolbar
-                var toolbar = rootVisualElement.Q("AnimationWindowToolbar") ?? 
-                             rootVisualElement.Q("Toolbar") ??
-                             rootVisualElement.Q(className: "unity-toolbar");
-                
-                if (toolbar != null)
+                // Move all existing children to the wrapper
+                var childrenToMove = new List<VisualElement>();
+                foreach (var child in rootVisualElement.Children())
                 {
-                    // Insert after toolbar
-                    insertTarget = toolbar.parent;
-                    insertAfter = toolbar;
-                }
-                else
-                {
-                    // Insert at the top
-                    insertTarget = rootVisualElement;
+                    childrenToMove.Add(child);
                 }
                 
-                if (insertTarget != null)
+                // Clear root and restructure
+                rootVisualElement.Clear();
+                
+                // Add search container first
+                rootVisualElement.Add(injectedSearchContainer);
+                
+                // Add wrapper with all original content
+                rootVisualElement.Add(wrapperContainer);
+                
+                // Move all original children to wrapper
+                foreach (var child in childrenToMove)
                 {
-                    if (insertAfter != null)
-                    {
-                        var index = insertTarget.IndexOf(insertAfter);
-                        if (index >= 0)
-                        {
-                            insertTarget.Insert(index + 1, injectedSearchContainer);
-                        }
-                        else
-                        {
-                            insertTarget.Insert(0, injectedSearchContainer);
-                        }
-                    }
-                    else
-                    {
-                        insertTarget.Insert(0, injectedSearchContainer);
-                    }
-                }
-                else
-                {
-                    // Fallback
-                    rootVisualElement.Insert(0, injectedSearchContainer);
+                    wrapperContainer.Add(child);
                 }
                 
                 // Create dropdown container (initially hidden)
@@ -208,6 +191,7 @@ namespace RedCandleGames.Editor
                 scrollView.style.maxHeight = 200;
                 searchDropdown.Add(scrollView);
                 
+                // Add dropdown to search container's parent (rootVisualElement)
                 rootVisualElement.Add(searchDropdown);
                 
                 // Refresh clip list
@@ -572,14 +556,47 @@ namespace RedCandleGames.Editor
         
         private static void CleanupInjection()
         {
-            if (injectedSearchContainer != null && injectedSearchContainer.parent != null)
+            try
             {
-                injectedSearchContainer.parent.Remove(injectedSearchContainer);
+                if (injectedSearchContainer != null && injectedSearchContainer.parent != null)
+                {
+                    var rootElement = injectedSearchContainer.parent;
+                    
+                    // Find the wrapper we created
+                    var wrapper = rootElement.Q("AnimationClipSearchWrapper");
+                    if (wrapper != null)
+                    {
+                        // Move all children from wrapper back to root
+                        var childrenToRestore = new List<VisualElement>();
+                        foreach (var child in wrapper.Children())
+                        {
+                            childrenToRestore.Add(child);
+                        }
+                        
+                        // Clear root
+                        rootElement.Clear();
+                        
+                        // Restore original structure
+                        foreach (var child in childrenToRestore)
+                        {
+                            rootElement.Add(child);
+                        }
+                    }
+                    else
+                    {
+                        // Simple removal if no wrapper found
+                        injectedSearchContainer.parent.Remove(injectedSearchContainer);
+                    }
+                }
+                
+                if (searchDropdown != null && searchDropdown.parent != null)
+                {
+                    searchDropdown.parent.Remove(searchDropdown);
+                }
             }
-            
-            if (searchDropdown != null && searchDropdown.parent != null)
+            catch (Exception e)
             {
-                searchDropdown.parent.Remove(searchDropdown);
+                Debug.LogError($"Error during cleanup: {e.Message}");
             }
             
             injectedSearchContainer = null;
