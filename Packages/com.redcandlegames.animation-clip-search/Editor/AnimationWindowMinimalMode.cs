@@ -75,7 +75,7 @@ namespace RedCandleGames.Editor
                 // Create minimal search button
                 searchButton = new Button(OpenSearchWindow);
                 searchButton.name = "AnimationClipSearchButton";
-                searchButton.text = "🔍";
+                searchButton.text = "S";
                 searchButton.tooltip = "Search Animation Clips (Alt+S)";
                 
                 // Position in bottom-left corner, flush against edges
@@ -84,7 +84,8 @@ namespace RedCandleGames.Editor
                 searchButton.style.left = 0;
                 searchButton.style.width = 20;
                 searchButton.style.height = 20;
-                searchButton.style.fontSize = 12;
+                searchButton.style.fontSize = 11;
+                searchButton.style.unityFontStyleAndWeight = FontStyle.Bold;
                 searchButton.style.paddingLeft = 0;
                 searchButton.style.paddingRight = 0;
                 searchButton.style.paddingTop = 0;
