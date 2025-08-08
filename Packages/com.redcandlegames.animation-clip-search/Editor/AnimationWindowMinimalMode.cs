@@ -83,7 +83,7 @@ namespace RedCandleGames.Editor
                 searchButton.style.bottom = 0;
                 searchButton.style.left = 0;
                 searchButton.style.width = 20;
-                searchButton.style.height = 18;
+                searchButton.style.height = 20;
                 searchButton.style.fontSize = 12;
                 searchButton.style.paddingLeft = 0;
                 searchButton.style.paddingRight = 0;
