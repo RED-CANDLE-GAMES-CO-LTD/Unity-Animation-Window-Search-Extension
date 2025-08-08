@@ -58,7 +58,27 @@ namespace RedCandleGames.Editor
                         for (int i = 0; i < Math.Min(5, rootVisualElement.childCount); i++)
                         {
                             var child = rootVisualElement[i];
-                            Debug.Log($"    [{i}] {child.GetType().Name} (name: '{child.name}')");
+                            Debug.Log($"    [{i}] {child.GetType().Name} (name: '{child.name}', class: '{string.Join(" ", child.GetClasses())}')");
+                            
+                            // Check if it's an IMGUI container
+                            if (child.GetType().Name == "IMGUIContainer" || child.ClassListContains("unity-imgui-container"))
+                            {
+                                Debug.Log($"      -> This is an IMGUI container - Animation Window content might be here");
+                            }
+                        }
+                        
+                        // Deep search for specific elements
+                        Debug.Log("\n  - Deep search for content areas:");
+                        var imguiContainers = rootVisualElement.Query(className: "unity-imgui-container").ToList();
+                        Debug.Log($"    Found {imguiContainers.Count} IMGUI containers");
+                        
+                        var contentAreas = rootVisualElement.Query<VisualElement>().Where(e => 
+                            e.name != null && (e.name.Contains("content") || e.name.Contains("Content"))).ToList();
+                        Debug.Log($"    Found {contentAreas.Count} elements with 'content' in name");
+                        
+                        foreach (var content in contentAreas)
+                        {
+                            Debug.Log($"      - {content.name} (parent: {content.parent?.name ?? "null"})");
                         }
                         
                         // Check if our injected element exists

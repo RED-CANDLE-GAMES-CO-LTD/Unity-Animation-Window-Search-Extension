@@ -139,32 +139,53 @@ namespace RedCandleGames.Editor
                 clearButton.style.display = DisplayStyle.None;
                 injectedSearchContainer.Add(clearButton);
                 
-                // Create a wrapper container to properly push down content
-                var wrapperContainer = new VisualElement();
-                wrapperContainer.name = "AnimationClipSearchWrapper";
-                wrapperContainer.style.flexDirection = FlexDirection.Column;
-                wrapperContainer.style.flexGrow = 1;
+                // Instead of restructuring, try to find the main content area
+                // Animation Window might have a specific structure we need to respect
                 
-                // Move all existing children to the wrapper
-                var childrenToMove = new List<VisualElement>();
-                foreach (var child in rootVisualElement.Children())
+                // Look for the main content container
+                var mainContent = rootVisualElement.Q("AnimationWindowContent") ??
+                                 rootVisualElement.Q("content") ??
+                                 rootVisualElement.Q(className: "unity-imgui-container");
+                
+                if (mainContent != null && mainContent.parent != null)
                 {
-                    childrenToMove.Add(child);
+                    // Insert search container before the main content
+                    var parent = mainContent.parent;
+                    var index = parent.IndexOf(mainContent);
+                    if (index >= 0)
+                    {
+                        parent.Insert(index, injectedSearchContainer);
+                    }
+                    else
+                    {
+                        rootVisualElement.Insert(0, injectedSearchContainer);
+                    }
                 }
-                
-                // Clear root and restructure
-                rootVisualElement.Clear();
-                
-                // Add search container first
-                rootVisualElement.Add(injectedSearchContainer);
-                
-                // Add wrapper with all original content
-                rootVisualElement.Add(wrapperContainer);
-                
-                // Move all original children to wrapper
-                foreach (var child in childrenToMove)
+                else
                 {
-                    wrapperContainer.Add(child);
+                    // Fallback: Look for any child that seems to be the main area
+                    VisualElement targetChild = null;
+                    foreach (var child in rootVisualElement.Children())
+                    {
+                        // Skip toolbar-like elements
+                        if (child.name != null && (child.name.Contains("toolbar") || child.name.Contains("Toolbar")))
+                            continue;
+                            
+                        // This might be the main content area
+                        targetChild = child;
+                        break;
+                    }
+                    
+                    if (targetChild != null)
+                    {
+                        var index = rootVisualElement.IndexOf(targetChild);
+                        rootVisualElement.Insert(index, injectedSearchContainer);
+                    }
+                    else
+                    {
+                        // Last resort: just add at the top
+                        rootVisualElement.Insert(0, injectedSearchContainer);
+                    }
                 }
                 
                 // Create dropdown container (initially hidden)
@@ -560,33 +581,7 @@ namespace RedCandleGames.Editor
             {
                 if (injectedSearchContainer != null && injectedSearchContainer.parent != null)
                 {
-                    var rootElement = injectedSearchContainer.parent;
-                    
-                    // Find the wrapper we created
-                    var wrapper = rootElement.Q("AnimationClipSearchWrapper");
-                    if (wrapper != null)
-                    {
-                        // Move all children from wrapper back to root
-                        var childrenToRestore = new List<VisualElement>();
-                        foreach (var child in wrapper.Children())
-                        {
-                            childrenToRestore.Add(child);
-                        }
-                        
-                        // Clear root
-                        rootElement.Clear();
-                        
-                        // Restore original structure
-                        foreach (var child in childrenToRestore)
-                        {
-                            rootElement.Add(child);
-                        }
-                    }
-                    else
-                    {
-                        // Simple removal if no wrapper found
-                        injectedSearchContainer.parent.Remove(injectedSearchContainer);
-                    }
+                    injectedSearchContainer.parent.Remove(injectedSearchContainer);
                 }
                 
                 if (searchDropdown != null && searchDropdown.parent != null)
