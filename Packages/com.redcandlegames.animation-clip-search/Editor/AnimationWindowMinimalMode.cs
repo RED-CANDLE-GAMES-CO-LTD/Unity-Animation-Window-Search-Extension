@@ -78,9 +78,9 @@ namespace RedCandleGames.Editor
                 searchButton.text = "S";
                 searchButton.tooltip = "Search Animation Clips (Alt+S)";
                 
-                // Position in bottom-left corner with slight bottom padding
+                // Position in bottom-left corner, slightly below edge
                 searchButton.style.position = Position.Absolute;
-                searchButton.style.bottom = 2;
+                searchButton.style.bottom = -2;
                 searchButton.style.left = 0;
                 searchButton.style.width = 22;
                 searchButton.style.height = 22;
