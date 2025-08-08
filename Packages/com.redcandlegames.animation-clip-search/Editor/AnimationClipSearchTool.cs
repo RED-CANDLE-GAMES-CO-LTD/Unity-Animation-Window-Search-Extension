@@ -28,19 +28,41 @@ namespace RedCandleGames.Editor
         
         public static void ShowWindow()
         {
-            var window = GetWindow<AnimationClipSearchTool>("Clip Search");
-            window.minSize = new Vector2(WINDOW_WIDTH, WINDOW_HEIGHT);
-            window.position = GetOptimalWindowPosition();
-            window.RefreshClipList();
+            try
+            {
+                var window = GetWindow<AnimationClipSearchTool>("Clip Search");
+                if (window != null)
+                {
+                    window.minSize = new Vector2(WINDOW_WIDTH, WINDOW_HEIGHT);
+                    window.position = GetOptimalWindowPosition();
+                    window.RefreshClipList();
+                }
+            }
+            catch (System.Exception e)
+            {
+                Debug.LogError($"Failed to create AnimationClipSearchTool window: {e.Message}");
+                Debug.LogError("Please try reimporting the package or restarting Unity.");
+            }
         }
         
         public static void ShowWindowWithCallback(System.Action<AnimationClip> callback)
         {
-            var window = GetWindow<AnimationClipSearchTool>("Clip Search");
-            window.minSize = new Vector2(WINDOW_WIDTH, WINDOW_HEIGHT);
-            window.position = GetOptimalWindowPosition();
-            window.onClipSelected = callback;
-            window.RefreshClipList();
+            try
+            {
+                var window = GetWindow<AnimationClipSearchTool>("Clip Search");
+                if (window != null)
+                {
+                    window.minSize = new Vector2(WINDOW_WIDTH, WINDOW_HEIGHT);
+                    window.position = GetOptimalWindowPosition();
+                    window.onClipSelected = callback;
+                    window.RefreshClipList();
+                }
+            }
+            catch (System.Exception e)
+            {
+                Debug.LogError($"Failed to create AnimationClipSearchTool window: {e.Message}");
+                Debug.LogError("Please try reimporting the package or restarting Unity.");
+            }
         }
         
         private static Rect GetOptimalWindowPosition()
