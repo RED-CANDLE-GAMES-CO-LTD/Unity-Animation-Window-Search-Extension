@@ -26,12 +26,37 @@ namespace RedCandleGames.Editor
                     var animationWindow = GetAnimationWindow();
                     if (animationWindow != null && EditorWindow.focusedWindow == animationWindow)
                     {
-                        // Open our search tool
-                        AnimationClipSearchTool.ShowWindowWithCallback(OnClipSelectedFromSearch);
+                        // Try to focus the integrated search field first
+                        if (!TryFocusIntegratedSearch(animationWindow))
+                        {
+                            // Fallback to popup search tool if integration fails
+                            AnimationClipSearchTool.ShowWindowWithCallback(OnClipSelectedFromSearch);
+                        }
                         Event.current.Use();
                     }
                 }
             }
+        }
+        
+        private static bool TryFocusIntegratedSearch(EditorWindow animWindow)
+        {
+            try
+            {
+                // Try to find and focus the integrated search field
+                var searchField = animWindow.rootVisualElement?.Q<TextField>("AnimationClipSearchField");
+                if (searchField != null)
+                {
+                    searchField.Focus();
+                    searchField.SelectAll();
+                    return true;
+                }
+            }
+            catch (System.Exception e)
+            {
+                Debug.LogWarning($"Failed to focus integrated search: {e.Message}");
+            }
+            
+            return false;
         }
         
         private static EditorWindow GetAnimationWindow()
