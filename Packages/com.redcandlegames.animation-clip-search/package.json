@@ -18,5 +18,7 @@
     "url": ""
   },
   "type": "tool",
-  "hideInEditor": false
+  "hideInEditor": false,
+  "documentationUrl": "https://github.com/RED-CANDLE-GAMES-CO-LTD/Unity-Animation-Window-Search-Extension/blob/main/Packages/com.redcandlegames.animation-clip-search/Documentation~/index.md",
+  "changelogUrl": "https://github.com/RED-CANDLE-GAMES-CO-LTD/Unity-Animation-Window-Search-Extension/blob/main/Packages/com.redcandlegames.animation-clip-search/CHANGELOG.md"
 }
