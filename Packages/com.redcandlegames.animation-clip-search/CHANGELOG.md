@@ -5,27 +5,26 @@ All notable changes to this package will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
-## [1.1.0-preview] - 2025-08-08
+## [1.1.0] - 2025-08-08
 
 ### Added
-- Experimental UI injection feature to integrate search directly into Animation Window
-- Real-time search with dropdown results (limited to 10 items)
-- Debug tools for diagnosing injection issues across Unity versions
-- Automatic fallback to popup window when injection fails
-- Support for Unity 2019.4+ with conditional compilation for newer features
+- Minimal search button in Animation Window (bottom-left corner)
+- Button provides quick access to search functionality without UI disruption
+- Compatible with all Unity versions (2019.4+)
 
 ### Changed
-- Updated package version to preview status to indicate experimental features
-- Enhanced Alt+S shortcut to try integrated search first, then fallback to popup
+- Switched to minimal UI approach for better compatibility
+- Search button positioned in bottom-left corner for easy access
+- Removed experimental full UI injection due to Unity 6 compatibility issues
 
 ### Fixed
-- Added conditional compilation for TextField.placeholder (Unity 2021.2+)
-- Added missing .meta files for Unity asset recognition
+- Resolved UI overlap issues in Animation Window
+- Improved cross-version compatibility
 
 ### Technical
-- Implemented UI Toolkit-based injection using rootVisualElement
-- Added delayed injection to ensure window initialization
-- Enhanced error logging with Unity version information
+- Simplified implementation using absolute positioned button
+- Maintained Alt+S keyboard shortcut functionality
+- Cleaner codebase with focus on stability
 
 ## [1.0.4] - 2025-08-08
 

@@ -7,28 +7,21 @@ using UnityEngine.UIElements;
 namespace RedCandleGames.Editor
 {
     /// <summary>
-    /// Alternative minimal injection mode that only adds a small search button
-    /// This is more compatible but less integrated than the full search bar
+    /// Adds a small search button to the Animation Window
     /// </summary>
     [InitializeOnLoad]
     public static class AnimationWindowMinimalMode
     {
-        private static bool useMinimalMode = true; // Set to true for minimal mode
         private static Button searchButton;
         private static EditorWindow lastAnimationWindow;
         
         static AnimationWindowMinimalMode()
         {
-            if (useMinimalMode)
-            {
-                EditorApplication.update += OnEditorUpdate;
-            }
+            EditorApplication.update += OnEditorUpdate;
         }
         
         private static void OnEditorUpdate()
         {
-            if (!useMinimalMode) return;
-            
             var animationWindow = GetAnimationWindow();
             
             if (animationWindow != null)
@@ -128,25 +121,6 @@ namespace RedCandleGames.Editor
             
             searchButton = null;
             lastAnimationWindow = null;
-        }
-        
-        [MenuItem("Window/Animation/Toggle Minimal Mode")]
-        private static void ToggleMinimalMode()
-        {
-            useMinimalMode = !useMinimalMode;
-            EditorPrefs.SetBool("AnimationClipSearch_MinimalMode", useMinimalMode);
-            
-            if (useMinimalMode)
-            {
-                Debug.Log("Animation Clip Search: Switched to minimal mode (button only)");
-                // Disable full injection
-                AnimationWindowUIInjector.DisableInjection();
-            }
-            else
-            {
-                Debug.Log("Animation Clip Search: Switched to full mode (search bar)");
-                CleanupMinimalUI();
-            }
         }
     }
 }
