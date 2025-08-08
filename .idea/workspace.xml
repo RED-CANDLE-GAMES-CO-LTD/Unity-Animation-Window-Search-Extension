@@ -5,7 +5,7 @@
   </component>
   <component name="ChangeListManager">
     <list default="true" id="69f9ab75-4677-4249-b4dc-8862eab50543" name="Changes" comment="">
-      <change beforePath="$PROJECT_DIR$/.idea/workspace.xml" beforeDir="false" afterPath="$PROJECT_DIR$/.idea/workspace.xml" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/Packages/com.redcandlegames.animation-clip-search/Editor/AnimationWindowUIInjector.cs" beforeDir="false" afterPath="$PROJECT_DIR$/Packages/com.redcandlegames.animation-clip-search/Editor/AnimationWindowUIInjector.cs" afterDir="false" />
     </list>
     <option name="SHOW_DIALOG" value="false" />
     <option name="HIGHLIGHT_CONFLICTS" value="true" />
@@ -50,7 +50,7 @@
       <updated>1754456975493</updated>
       <workItem from="1754456977209" duration="1047000" />
       <workItem from="1754665664852" duration="3841000" />
-      <workItem from="1754671195105" duration="2718000" />
+      <workItem from="1754671195105" duration="3075000" />
     </task>
     <servers />
   </component>

@@ -202,7 +202,6 @@ namespace RedCandleGames.Editor
                 searchDropdown.style.borderRightColor = new Color(0.1f, 0.1f, 0.1f, 1f);
                 searchDropdown.style.borderBottomColor = new Color(0.1f, 0.1f, 0.1f, 1f);
                 searchDropdown.style.display = DisplayStyle.None;
-                searchDropdown.style.zIndex = 1000;  // Ensure dropdown appears above other content
                 
                 // Create scroll view for dropdown
                 var scrollView = new ScrollView();
