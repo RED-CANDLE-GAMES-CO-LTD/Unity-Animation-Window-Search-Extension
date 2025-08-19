@@ -260,8 +260,16 @@ namespace RedCandleGames.Editor
             // Get all states from all layers
             foreach (var layer in controller.layers)
             {
-                var stateMachine = layer.stateMachine;
-                GetClipsFromStateMachine(stateMachine, clips);
+                if (layer.syncedLayerIndex < 0)
+                {
+                    var stateMachine = layer.stateMachine;
+                    GetClipsFromStateMachine(stateMachine, clips);
+                }
+                else
+                {
+                    var stateMachine = controller.layers[layer.syncedLayerIndex].stateMachine;
+                    GetClipsFromSyncedStateMachine(layer, stateMachine, clips);
+                }
             }
             
             return new List<AnimationClip>(clips);
@@ -302,6 +310,27 @@ namespace RedCandleGames.Editor
                 {
                     GetClipsFromBlendTree(childBlendTree, clips);
                 }
+            }
+        }
+
+        private void GetClipsFromSyncedStateMachine(AnimatorControllerLayer layer, AnimatorStateMachine syncedStateMachine, HashSet<AnimationClip> clips)
+        {
+            foreach (var state in syncedStateMachine.states)
+            {
+                var motion = layer.GetOverrideMotion(state.state);
+                if (motion is AnimationClip clip)
+                {
+                    clips.Add(clip);
+                }
+                else if (motion is BlendTree blendTree)
+                {
+                    GetClipsFromBlendTree(blendTree, clips);
+                }
+            }
+
+            foreach (var subStateMachine in syncedStateMachine.stateMachines)
+            {
+                GetClipsFromSyncedStateMachine(layer, subStateMachine.stateMachine, clips);
             }
         }
         
