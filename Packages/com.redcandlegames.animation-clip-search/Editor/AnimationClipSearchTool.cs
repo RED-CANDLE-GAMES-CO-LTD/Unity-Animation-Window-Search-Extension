@@ -1,10 +1,14 @@
-using System.Collections.Generic;
+﻿using System.Collections.Generic;
 using System.Linq;
 using UnityEditor;
 using UnityEditor.Animations;
 using UnityEngine;
+#if UNITY_EDITOR_WIN
+using System;
+using System.Runtime.InteropServices;
+#endif
 
-namespace RedCandleGames.Editor
+namespace JWS.Editor
 {
     public class AnimationClipSearchTool : EditorWindow
     {
@@ -13,6 +17,9 @@ namespace RedCandleGames.Editor
         private List<AnimationClip> allClips = new List<AnimationClip>();
         private List<AnimationClip> filteredClips = new List<AnimationClip>();
         private System.Action<AnimationClip> onClipSelected;
+        private int selectedIndex = 0;
+        private bool scrollToSelected = false;
+        private float scrollViewHeight = 0f;
         
         private GUIStyle searchFieldStyle;
         private GUIStyle clipButtonStyle;
@@ -20,104 +27,85 @@ namespace RedCandleGames.Editor
         private const float WINDOW_WIDTH = 300f;
         private const float WINDOW_HEIGHT = 400f;
         
-        // Track overridden clips and their relationships
-        private HashSet<AnimationClip> overriddenBaseClips = new HashSet<AnimationClip>();
-        private Dictionary<AnimationClip, AnimationClip> baseToOverrideMap = new Dictionary<AnimationClip, AnimationClip>();
-        private bool hideOverriddenClips = true;
-        private const string HIDE_OVERRIDDEN_PREF_KEY = "AnimationClipSearch_HideOverridden";
-        
+        [MenuItem("Window/JWS/Animation Clip Search Tool")]
         public static void ShowWindow()
         {
-            try
-            {
-                var window = GetWindow<AnimationClipSearchTool>("Clip Search");
-                if (window != null)
-                {
-                    window.minSize = new Vector2(WINDOW_WIDTH, WINDOW_HEIGHT);
-                    window.position = GetOptimalWindowPosition();
-                    window.RefreshClipList();
-                }
-            }
-            catch (System.Exception e)
-            {
-                Debug.LogError($"Failed to create AnimationClipSearchTool window: {e.Message}");
-                Debug.LogError("Please try reimporting the package or restarting Unity.");
-            }
+            var window = GetWindow<AnimationClipSearchTool>("Clip Search");
+            window.minSize = new Vector2(WINDOW_WIDTH, WINDOW_HEIGHT);
+            window.position = new Rect(Screen.width / 2, Screen.height / 2, WINDOW_WIDTH, WINDOW_HEIGHT);
+            window.RefreshClipList();
+            FocusNextTick(window);
         }
-        
+
         public static void ShowWindowWithCallback(System.Action<AnimationClip> callback)
         {
-            try
-            {
-                var window = GetWindow<AnimationClipSearchTool>("Clip Search");
-                if (window != null)
-                {
-                    window.minSize = new Vector2(WINDOW_WIDTH, WINDOW_HEIGHT);
-                    window.position = GetOptimalWindowPosition();
-                    window.onClipSelected = callback;
-                    window.RefreshClipList();
-                }
-            }
-            catch (System.Exception e)
-            {
-                Debug.LogError($"Failed to create AnimationClipSearchTool window: {e.Message}");
-                Debug.LogError("Please try reimporting the package or restarting Unity.");
-            }
+            var window = GetWindow<AnimationClipSearchTool>("Clip Search");
+            window.minSize = new Vector2(WINDOW_WIDTH, WINDOW_HEIGHT);
+            window.position = new Rect(Screen.width / 2, Screen.height / 2, WINDOW_WIDTH, WINDOW_HEIGHT);
+            window.onClipSelected = callback;
+            window.RefreshClipList();
+            FocusNextTick(window);
         }
-        
-        private static Rect GetOptimalWindowPosition()
+
+        // Focusing immediately after GetWindow() doesn't reliably grab native OS
+        // keyboard focus for a newly created floating window; deferring one tick
+        // (after the native window actually exists) fixes arrow keys requiring
+        // an Alt+Tab away and back before they register.
+        private static void FocusNextTick(AnimationClipSearchTool window)
         {
-            // Try to position the window overlapping the center of Animation Window
-            System.Type animationWindowType = System.Type.GetType("UnityEditor.AnimationWindow, UnityEditor");
-            if (animationWindowType != null)
+            EditorApplication.delayCall += () =>
             {
-                EditorWindow[] animWindows = Resources.FindObjectsOfTypeAll(animationWindowType) as EditorWindow[];
-                if (animWindows != null && animWindows.Length > 0)
-                {
-                    EditorWindow animWindow = animWindows[0];
-                    if (animWindow != null)
-                    {
-                        Rect animWindowPos = animWindow.position;
-                        
-                        // Position the search window centered horizontally on the Animation Window
-                        float newX = animWindowPos.x + (animWindowPos.width - WINDOW_WIDTH) / 2;
-                        // Align Y position with Animation Window
-                        float newY = animWindowPos.y;
-                        
-                        // Ensure the window is within screen bounds
-                        if (newX < 0) newX = 0;
-                        if (newX + WINDOW_WIDTH > Screen.currentResolution.width)
-                        {
-                            newX = Screen.currentResolution.width - WINDOW_WIDTH;
-                        }
-                        
-                        if (newY < 0) newY = 0;
-                        if (newY + WINDOW_HEIGHT > Screen.currentResolution.height)
-                        {
-                            newY = Screen.currentResolution.height - WINDOW_HEIGHT - 50; // Leave some margin
-                        }
-                        
-                        return new Rect(newX, newY, WINDOW_WIDTH, WINDOW_HEIGHT);
-                    }
-                }
-            }
-            
-            // Fallback to center of screen if Animation Window not found
-            return new Rect(Screen.width / 2 - WINDOW_WIDTH / 2, Screen.height / 2 - WINDOW_HEIGHT / 2, WINDOW_WIDTH, WINDOW_HEIGHT);
+                if (window == null) return;
+#if UNITY_EDITOR_WIN
+                ForceOSForegroundFocus();
+#endif
+                window.Focus();
+            };
         }
-        
+
+#if UNITY_EDITOR_WIN
+        [DllImport("user32.dll")] private static extern IntPtr GetForegroundWindow();
+        [DllImport("user32.dll")] private static extern uint GetWindowThreadProcessId(IntPtr hWnd, out uint processId);
+        [DllImport("kernel32.dll")] private static extern uint GetCurrentThreadId();
+        [DllImport("user32.dll")] private static extern bool AttachThreadInput(uint idAttach, uint idAttachTo, bool fAttach);
+        [DllImport("user32.dll")] private static extern bool SetForegroundWindow(IntPtr hWnd);
+        [DllImport("user32.dll")] private static extern bool BringWindowToTop(IntPtr hWnd);
+
+        // Windows blocks SetForegroundWindow from a background process (focus-stealing
+        // prevention) unless its input queue is attached to the current foreground
+        // thread's input queue. This is why the window needed an Alt+Tab away and back
+        // before it would receive keyboard events.
+        private static void ForceOSForegroundFocus()
+        {
+            IntPtr unityWindow = System.Diagnostics.Process.GetCurrentProcess().MainWindowHandle;
+            if (unityWindow == IntPtr.Zero) return;
+
+            IntPtr foregroundWindow = GetForegroundWindow();
+            uint foregroundThreadId = GetWindowThreadProcessId(foregroundWindow, out _);
+            uint currentThreadId = GetCurrentThreadId();
+
+            if (foregroundThreadId != currentThreadId && AttachThreadInput(foregroundThreadId, currentThreadId, true))
+            {
+                BringWindowToTop(unityWindow);
+                SetForegroundWindow(unityWindow);
+                AttachThreadInput(foregroundThreadId, currentThreadId, false);
+            }
+            else
+            {
+                BringWindowToTop(unityWindow);
+                SetForegroundWindow(unityWindow);
+            }
+        }
+#endif
+
         private void OnEnable()
         {
-            // Load preference
-            hideOverriddenClips = EditorPrefs.GetBool(HIDE_OVERRIDDEN_PREF_KEY, true);
             RefreshClipList();
         }
         
         private void RefreshClipList()
         {
             allClips.Clear();
-            overriddenBaseClips.Clear();
-            baseToOverrideMap.Clear();
             
             // First try to get clips from current Animator Controller
             GameObject selectedGO = Selection.activeGameObject;
@@ -129,77 +117,13 @@ namespace RedCandleGames.Editor
                 Animator animator = FindAnimatorInHierarchy(selectedGO);
                 if (animator != null && animator.runtimeAnimatorController != null)
                 {
-                    // Handle both regular AnimatorController and AnimatorOverrideController
-                    AnimatorController controller = null;
-                    AnimatorOverrideController overrideController = animator.runtimeAnimatorController as AnimatorOverrideController;
-                    
-                    if (overrideController != null)
+                    AnimatorController controller = animator.runtimeAnimatorController as AnimatorController;
+                    if (controller != null)
                     {
-                        // For override controllers, we need to get clips from both the base controller and overrides
-                        controller = overrideController.runtimeAnimatorController as AnimatorController;
-                        
-                        if (controller != null)
-                        {
-                            // First, get all clips from the base controller
-                            var baseClips = GetAllClipsFromController(controller);
-                            
-                            // Get override mappings
-                            var overrides = new List<KeyValuePair<AnimationClip, AnimationClip>>(overrideController.overridesCount);
-                            overrideController.GetOverrides(overrides);
-                            
-                            // Create mappings for overrides
-                            foreach (var kvp in overrides)
-                            {
-                                if (kvp.Key != null && kvp.Value != null)
-                                {
-                                    baseToOverrideMap[kvp.Key] = kvp.Value;
-                                    if (!kvp.Key.name.StartsWith("__preview__"))
-                                    {
-                                        overriddenBaseClips.Add(kvp.Key);
-                                    }
-                                }
-                            }
-                            
-                            // When "Hide Overridden Clips" is checked, only show the effective clips
-                            // When unchecked, show both base and override clips
-                            foreach (var baseClip in baseClips)
-                            {
-                                if (!baseClip.name.StartsWith("__preview__"))
-                                {
-                                    if (baseToOverrideMap.ContainsKey(baseClip))
-                                    {
-                                        // This base clip has an override
-                                        var overrideClip = baseToOverrideMap[baseClip];
-                                        if (!overrideClip.name.StartsWith("__preview__"))
-                                        {
-                                            allClips.Add(overrideClip);
-                                        }
-                                        // Add the base clip too (will be filtered later if needed)
-                                        allClips.Add(baseClip);
-                                    }
-                                    else
-                                    {
-                                        // No override for this clip, just add the base clip
-                                        allClips.Add(baseClip);
-                                    }
-                                }
-                            }
-                            
-                            foundControllerClips = true;
-                        }
-                    }
-                    else
-                    {
-                        // Regular AnimatorController
-                        controller = animator.runtimeAnimatorController as AnimatorController;
-                        
-                        if (controller != null)
-                        {
-                            // Get all clips from the animator controller
-                            var clips = GetAllClipsFromController(controller);
-                            allClips.AddRange(clips);
-                            foundControllerClips = true;
-                        }
+                        // Get all clips from the animator controller
+                        var clips = GetAllClipsFromController(controller);
+                        allClips.AddRange(clips);
+                        foundControllerClips = true;
                     }
                 }
             }
@@ -221,9 +145,7 @@ namespace RedCandleGames.Editor
                 }
             }
             
-            // Remove duplicates and sort by name
-            var uniqueClips = new HashSet<AnimationClip>(allClips);
-            allClips = new List<AnimationClip>(uniqueClips);
+            // Sort by name
             allClips.Sort((a, b) => string.Compare(a.name, b.name, System.StringComparison.OrdinalIgnoreCase));
             
             UpdateFilteredList();
@@ -260,16 +182,11 @@ namespace RedCandleGames.Editor
             // Get all states from all layers
             foreach (var layer in controller.layers)
             {
-                if (layer.syncedLayerIndex < 0)
-                {
-                    var stateMachine = layer.stateMachine;
+                var stateMachine = layer.stateMachine;
+                if (layer.syncedLayerIndex==-1)
                     GetClipsFromStateMachine(stateMachine, clips);
-                }
                 else
-                {
-                    var stateMachine = controller.layers[layer.syncedLayerIndex].stateMachine;
-                    GetClipsFromSyncedStateMachine(layer, stateMachine, clips);
-                }
+                    GetOverrideClipsFromStateMachine(layer, controller.layers[layer.syncedLayerIndex].stateMachine, clips);
             }
             
             return new List<AnimationClip>(clips);
@@ -313,49 +230,50 @@ namespace RedCandleGames.Editor
             }
         }
 
-        private void GetClipsFromSyncedStateMachine(AnimatorControllerLayer layer, AnimatorStateMachine syncedStateMachine, HashSet<AnimationClip> clips)
+        //Sync layers
+        private void GetOverrideClipsFromStateMachine(AnimatorControllerLayer layer, AnimatorStateMachine stateMachine, HashSet<AnimationClip> clips)
         {
-            foreach (var state in syncedStateMachine.states)
+            // Get clips from states
+            foreach (var state in stateMachine.states)
             {
-                var motion = layer.GetOverrideMotion(state.state);
-                if (motion is AnimationClip clip)
+                if (layer.GetOverrideMotion(state.state) is AnimationClip clip)
                 {
                     clips.Add(clip);
                 }
-                else if (motion is BlendTree blendTree)
+                else if (layer.GetOverrideMotion(state.state) is BlendTree blendTree)
                 {
                     GetClipsFromBlendTree(blendTree, clips);
                 }
             }
 
-            foreach (var subStateMachine in syncedStateMachine.stateMachines)
+            // Recursively check sub state machines
+            foreach (var subStateMachine in stateMachine.stateMachines)
             {
-                GetClipsFromSyncedStateMachine(layer, subStateMachine.stateMachine, clips);
+                GetOverrideClipsFromStateMachine(layer, subStateMachine.stateMachine, clips);
             }
         }
-        
+
+
+
+
+
         private void UpdateFilteredList()
         {
-            IEnumerable<AnimationClip> clipsToFilter = allClips;
-            
-            // Apply overridden filter if enabled
-            if (hideOverriddenClips && overriddenBaseClips.Count > 0)
-            {
-                clipsToFilter = allClips.Where(clip => !overriddenBaseClips.Contains(clip));
-            }
-            
             if (string.IsNullOrEmpty(searchQuery))
             {
-                filteredClips = new List<AnimationClip>(clipsToFilter);
+                filteredClips = new List<AnimationClip>(allClips);
             }
             else
             {
                 string lowerQuery = searchQuery.ToLower();
-                filteredClips = clipsToFilter.Where(clip => 
+                filteredClips = allClips.Where(clip =>
                     clip.name.ToLower().Contains(lowerQuery) ||
                     AssetDatabase.GetAssetPath(clip).ToLower().Contains(lowerQuery)
                 ).ToList();
             }
+
+            selectedIndex = filteredClips.Count > 0 ? Mathf.Clamp(selectedIndex, 0, filteredClips.Count - 1) : 0;
+            scrollToSelected = true;
         }
         
         private void InitializeStyles()
@@ -399,21 +317,6 @@ namespace RedCandleGames.Editor
                 EditorGUI.FocusTextInControl("SearchField");
             }
             
-            // Show hide overridden clips checkbox only if there are actually overridden clips
-            if (overriddenBaseClips.Count > 0)
-            {
-                EditorGUILayout.Space(5);
-                EditorGUI.BeginChangeCheck();
-                hideOverriddenClips = EditorGUILayout.Toggle("Hide Overridden Clips", hideOverriddenClips);
-                if (EditorGUI.EndChangeCheck())
-                {
-                    // Save preference
-                    EditorPrefs.SetBool(HIDE_OVERRIDDEN_PREF_KEY, hideOverriddenClips);
-                    UpdateFilteredList();
-                }
-                EditorGUILayout.Space(2);
-            }
-            
             // Results info
             GameObject selectedGO = Selection.activeGameObject;
             string searchScope = "";
@@ -423,32 +326,52 @@ namespace RedCandleGames.Editor
                 if (animator != null && animator.runtimeAnimatorController != null)
                 {
                     searchScope = animator.runtimeAnimatorController.name;
-                    // Add (Override) suffix if it's an override controller
-                    if (animator.runtimeAnimatorController is AnimatorOverrideController)
-                    {
-                        searchScope += " (Override)";
-                    }
                 }
             }
             
-            EditorGUILayout.Space(3);
             GUILayout.Label($"{filteredClips.Count} clips{(string.IsNullOrEmpty(searchScope) ? "" : " in " + searchScope)}", EditorStyles.miniLabel);
-            EditorGUILayout.Space(3);
-            
+
+            // Correct the scroll position analytically, before the scroll view is laid
+            // out, so the very next repaint already shows the selected item in view
+            // (fixing up the rect afterwards was always one repaint too late to matter).
+            if (scrollToSelected)
+            {
+                ScrollToShowIndex(selectedIndex);
+                scrollToSelected = false;
+            }
+
             // Clip list
             scrollPosition = EditorGUILayout.BeginScrollView(scrollPosition);
-            
-            foreach (var clip in filteredClips)
+
+            for (int i = 0; i < filteredClips.Count; i++)
             {
+                var clip = filteredClips[i];
+                bool isSelected = i == selectedIndex;
+
+                Color previousColor = GUI.backgroundColor;
+                if (isSelected)
+                {
+                    GUI.backgroundColor = new Color(0.24f, 0.48f, 0.90f);
+                }
+
                 if (GUILayout.Button(clip.name, clipButtonStyle, GUILayout.Height(18)))
                 {
+                    selectedIndex = i;
                     ApplyToAnimationWindow(clip);
                 }
+
+                GUI.backgroundColor = previousColor;
             }
-            
+
             EditorGUILayout.EndScrollView();
+
+            if (Event.current.type == EventType.Repaint)
+            {
+                scrollViewHeight = GUILayoutUtility.GetLastRect().height;
+            }
+
             EditorGUILayout.EndVertical();
-            
+
             // Handle keyboard navigation
             HandleKeyboardNavigation();
         }
@@ -462,14 +385,54 @@ namespace RedCandleGames.Editor
                     Close();
                     Event.current.Use();
                 }
+                else if (Event.current.keyCode == KeyCode.UpArrow)
+                {
+                    if (filteredClips.Count > 0)
+                    {
+                        selectedIndex = Mathf.Max(0, selectedIndex - 1);
+                        scrollToSelected = true;
+                        Repaint();
+                    }
+                    Event.current.Use();
+                }
+                else if (Event.current.keyCode == KeyCode.DownArrow)
+                {
+                    if (filteredClips.Count > 0)
+                    {
+                        selectedIndex = Mathf.Min(filteredClips.Count - 1, selectedIndex + 1);
+                        scrollToSelected = true;
+                        Repaint();
+                    }
+                    Event.current.Use();
+                }
                 else if (Event.current.keyCode == KeyCode.Return || Event.current.keyCode == KeyCode.KeypadEnter)
                 {
                     if (filteredClips.Count > 0)
                     {
-                        ApplyToAnimationWindow(filteredClips[0]);
+                        int indexToApply = Mathf.Clamp(selectedIndex, 0, filteredClips.Count - 1);
+                        ApplyToAnimationWindow(filteredClips[indexToApply]);
                         Event.current.Use();
                     }
                 }
+            }
+        }
+
+        private const float ITEM_ROW_HEIGHT = 20f; // 18px button + ~2px auto-layout spacing
+
+        private void ScrollToShowIndex(int index)
+        {
+            if (scrollViewHeight <= 0f) return;
+
+            float itemY = index * ITEM_ROW_HEIGHT;
+            float itemBottom = itemY + ITEM_ROW_HEIGHT;
+
+            if (itemY < scrollPosition.y)
+            {
+                scrollPosition.y = itemY;
+            }
+            else if (itemBottom > scrollPosition.y + scrollViewHeight)
+            {
+                scrollPosition.y = itemBottom - scrollViewHeight;
             }
         }
         
